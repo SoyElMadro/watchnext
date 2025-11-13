@@ -1,0 +1,16 @@
+{
+  "name": "WatchNext",
+  "short_name": "WatchNext",
+  "description": "Descubrí películas y series, agregá a tu lista y calificá lo que ves.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "icons": [
+    {
+      "src": "/icons/icon.png",
+      "sizes": "500x500",
+      "type": "image/png"
+    }
+  ]
+}
