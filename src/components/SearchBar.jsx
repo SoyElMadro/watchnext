@@ -1,65 +1,86 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Search, X } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 
 export default function SearchBar({ onSearch, onClear }) {
   const [query, setQuery] = useState('');
+  const [focused, setFocused] = useState(false);
   const inputRef = useRef(null);
+  const debounceRef = useRef(null);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const trimmed = query.trim();
-    if (trimmed) onSearch(trimmed);
+  const handleInput = (e) => {
+    const value = e.target.value;
+    setQuery(value);
+
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (value.trim().length > 2) {
+      debounceRef.current = setTimeout(() => {
+        onSearch(value.trim());
+      }, 500);
+    }
   };
 
   const handleClear = () => {
     setQuery('');
-    onClear?.();
+    onClear();
     inputRef.current?.focus();
   };
 
-  useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === 'Escape' && query) handleClear();
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, [query]);
+  const handleKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      if (query) {
+        handleClear();
+      } else {
+        inputRef.current?.blur();
+      }
+    }
+  };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-full max-w-2xl mx-auto mb-8 px-2"
-      role="search"
-      aria-label="Buscar contenido"
-    >
-      <div className="relative">
-        <Search
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
-          aria-hidden="true"
-        />
+    <div className="w-full max-w-2xl mx-auto">
+      <div
+        className={`
+          relative flex items-center rounded-2xl bg-card border transition-all duration-300
+          ${focused
+            ? 'border-accent/40 shadow-glow shadow-accent/10 scale-[1.02]'
+            : 'border-white/5 hover:border-white/10'
+          }
+        `}
+      >
+        <div className="pl-5 pr-3 py-3.5">
+          <Search className={`w-5 h-5 transition-colors duration-200 ${focused ? 'text-accent' : 'text-slate-400'}`} />
+        </div>
 
         <input
           ref={inputRef}
           type="text"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar películas o series..."
-          aria-label="Buscar películas o series"
-          className="w-full px-4 py-3 pl-12 pr-12 rounded-lg bg-gray-900/80 border border-gray-700 text-white placeholder-gray-400 
-                     focus:outline-none focus:ring-2 focus:ring-red-500 transition-all duration-200 backdrop-blur-md"
+          onChange={handleInput}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          onKeyDown={handleKeyDown}
+          placeholder="Buscar películas, series..."
+          className="flex-1 bg-transparent text-white text-sm placeholder:text-slate-500 py-3.5 pr-4 outline-none"
+          aria-label="Buscar contenido"
         />
 
-        {query && (
-          <button
-            type="button"
-            onClick={handleClear}
-            aria-label="Limpiar búsqueda"
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-opacity duration-200"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        <AnimatePresence>
+          {query && (
+            <button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.2 }}
+              onClick={handleClear}
+              className="mr-3 w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"
+              aria-label="Limpiar búsqueda"
+            >
+              <X className="w-3.5 h-3.5 text-slate-400" />
+            </button>
+          )}
+        </AnimatePresence>
       </div>
-    </form>
+    </div>
   );
 }

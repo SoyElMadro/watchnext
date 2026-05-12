@@ -6,7 +6,7 @@ import MyLists from './pages/MyLists';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen bg-bg text-white font-sans">
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />

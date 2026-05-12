@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { tmdb } from "../utils/tmdb";
-import { Trash2, Star, Film, Tv, Clock } from "lucide-react";
+import { Trash2, Star, Film, Tv, Clock, ListX, BookmarkCheck, Sparkles, ArrowUpDown } from "lucide-react";
 import StarRating from "../components/StarRating";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function MyLists() {
   const [lists, setLists] = useState([]);
@@ -10,7 +11,7 @@ export default function MyLists() {
 
   useEffect(() => {
     loadLists();
-    document.title = "Mi Lista | WatchNext 🎬";
+    document.title = "Mis Listas | WatchNext";
   }, []);
 
   const loadLists = () => {
@@ -56,7 +57,6 @@ export default function MyLists() {
     return 0;
   });
 
-  // 🔹 Separa las películas ya estrenadas de las que aún no se estrenaron
   const today = new Date();
   const upcoming = filteredLists.filter(
     (item) => new Date(item.release_date || item.first_air_date) > today
@@ -65,28 +65,43 @@ export default function MyLists() {
     (item) => new Date(item.release_date || item.first_air_date) <= today
   );
 
+  const ratedItems = lists.filter(l => l.userRating);
+  const avgRating = ratedItems.length > 0
+    ? ratedItems.reduce((acc, l) => acc + l.userRating, 0) / ratedItems.length
+    : 0;
+
   if (lists.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center px-4">
-        <div className="text-center">
-          <Film className="w-20 h-20 text-gray-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Tu lista está vacía</h2>
-          <p className="text-gray-400 mb-6 text-sm sm:text-base">
-            Agregá películas o series para ver más tarde
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center max-w-md"
+        >
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            className="w-20 h-20 rounded-3xl bg-card border border-white/5 flex items-center justify-center mx-auto mb-6"
+          >
+            <BookmarkCheck className="w-10 h-10 text-slate-600" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-white mb-3">Tu lista está vacía</h2>
+          <p className="text-slate-400 mb-8 text-sm leading-relaxed">
+            Guardá películas y series para no perderlas de vista. Tu próxima binge-session te espera.
           </p>
           <Link
             to="/"
-            className="inline-block bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-semibold transition"
+            className="btn-accent inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold text-sm"
           >
+            <Sparkles className="w-4 h-4" />
             Explorar contenido
           </Link>
-        </div>
+        </motion.div>
       </div>
     );
   }
 
-  // 🔹 Función auxiliar para renderizar una tarjeta
-  const renderItemCard = (item, upcoming = false) => {
+  const renderItemCard = (item, isUpcoming = false) => {
     const isMovie = item.media_type === "movie" || item.title;
     const title = item.title || item.name;
     const releaseDate = item.release_date || item.first_air_date;
@@ -94,165 +109,211 @@ export default function MyLists() {
     const type = isMovie ? "movie" : "tv";
 
     return (
-      <div
-        key={item.id}
-        className="bg-gray-800 rounded-lg overflow-hidden hover:ring-2 hover:ring-red-500 transition"
+      <motion.div
+        layout
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9, height: 0 }}
+        transition={{ duration: 0.35 }}
+        className="bg-card rounded-2xl border border-white/5 overflow-hidden hover:border-white/10 transition-colors duration-200"
       >
         <div className="flex flex-col sm:flex-row">
-          <Link to={`/${type}/${item.id}`} className="flex-shrink-0 w-full sm:w-32">
-            <img
-              src={tmdb.getImageUrl(item.poster_path, "w342")}
-              alt={title}
-              className="w-full h-56 sm:h-48 object-cover"
-            />
-          </Link>
-
-          <div className="flex-1 p-4 flex flex-col justify-between">
-            <div>
-              <Link to={`/${type}/${item.id}`}>
-                <h3 className="font-bold text-white text-lg sm:text-base mb-2 hover:text-red-500 transition line-clamp-2">
-                  {title}
-                </h3>
-              </Link>
-
-              <div className="flex items-center space-x-2 mb-2">
-                {isMovie ? (
-                  <Film className="w-4 h-4 text-gray-400" />
-                ) : (
-                  <Tv className="w-4 h-4 text-gray-400" />
-                )}
-                <span className="text-xs sm:text-sm text-gray-400">
-                  {isMovie ? "Película" : "Serie"} • {year}
-                </span>
-              </div>
-
+          <Link
+            to={`/${type}/${item.id}`}
+            className="flex-shrink-0 w-full sm:w-36 lg:w-40"
+          >
+            <div className="relative aspect-[2/3] overflow-hidden">
+              <img
+                src={tmdb.getImageUrl(item.poster_path, "w342")}
+                alt={title}
+                className="w-full h-full object-cover"
+              />
               {item.vote_average > 0 && (
-                <div className="flex items-center space-x-1 mb-3">
-                  <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                  <span className="text-sm text-white font-semibold">
-                    {item.vote_average.toFixed(1)}
-                  </span>
+                <div className="absolute top-2 left-2 px-2 py-1 rounded-lg bg-black/70 backdrop-blur-sm flex items-center gap-1">
+                  <Star className="w-3 h-3 text-amber-400 fill-current" />
+                  <span className="text-xs font-bold text-white">{item.vote_average.toFixed(1)}</span>
                 </div>
               )}
+            </div>
+          </Link>
 
-              <p className="text-xs text-gray-500 mb-3">
-                Estreno: {new Date(releaseDate).toLocaleDateString("es-ES")}
-              </p>
+          <div className="flex-1 p-4 sm:p-5 flex flex-col justify-between gap-4">
+            <div className="space-y-3">
+              <div>
+                <Link to={`/${type}/${item.id}`}>
+                  <h3 className="font-bold text-white text-base sm:text-lg leading-tight line-clamp-2 hover:text-accent-hover transition-colors">
+                    {title}
+                  </h3>
+                </Link>
 
-              {!upcoming ? (
-                <>
-                  {/* ⭐ Puntuación personal */}
-                  <label className="text-sm text-gray-300 block mb-1">
-                    Tu puntuación:
-                  </label>
-                  <div className="mb-3 flex flex-wrap items-center">
-                    <StarRating
-                      rating={item.userRating || 0}
-                      onRate={(r) => handleRating(item.id, r)}
-                    />
-                    <span className="text-xs sm:text-sm text-gray-400 ml-2 mt-1 sm:mt-0">
-                      {item.userRating
-                        ? `(${item.userRating} de 10)`
-                        : "(Sin puntuar)"}
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="flex items-center gap-1.5">
+                    {isMovie ? (
+                      <Film className="w-3.5 h-3.5 text-slate-500" />
+                    ) : (
+                      <Tv className="w-3.5 h-3.5 text-slate-500" />
+                    )}
+                    <span className="text-xs text-slate-500 font-medium">
+                      {isMovie ? 'Película' : 'Serie'}
                     </span>
                   </div>
+                  <div className="w-1 h-1 rounded-full bg-slate-700" />
+                  <span className="text-xs text-slate-500 font-medium">{year}</span>
+                </div>
+              </div>
 
-                  {/* 💬 Comentario */}
+              {releaseDate && (
+                <p className="text-xs text-slate-600">
+                  Estreno: {new Date(releaseDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              )}
+
+              {!isUpcoming ? (
+                <>
                   <div>
-                    <label className="text-sm text-gray-300 block mb-1">
-                      Tu comentario:
-                    </label>
+                    <label className="text-xs text-slate-500 font-medium block mb-2">Tu puntuación</label>
+                    <div className="flex items-center gap-2">
+                      <StarRating
+                        rating={item.userRating || 0}
+                        onRate={(r) => handleRating(item.id, r)}
+                      />
+                      <span className="text-xs text-slate-600">
+                        {item.userRating ? `${item.userRating}/10` : 'Sin puntuar'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="text-xs text-slate-500 font-medium block mb-2">Tu comentario</label>
                     <textarea
                       placeholder="Escribí qué te pareció..."
                       value={item.userComment || ""}
-                      onChange={(e) =>
-                        handleCommentChange(item.id, e.target.value)
-                      }
-                      className="w-full bg-gray-700 text-gray-200 text-sm rounded-lg p-2 resize-none focus:outline-none focus:ring-1 focus:ring-red-500"
+                      onChange={(e) => handleCommentChange(item.id, e.target.value)}
+                      className="w-full bg-surface text-slate-300 text-sm rounded-xl p-3 resize-none border border-white/5 focus:border-accent/30 focus:outline-none transition-colors placeholder:text-slate-600"
                       rows="2"
                     />
                   </div>
                 </>
               ) : (
-                <div className="flex items-center gap-2 text-yellow-400 font-medium mt-2">
+                <div className="flex items-center gap-2 text-amber-400 font-medium">
                   <Clock className="w-4 h-4" />
-                  <span>Aún no estrenada</span>
+                  <span className="text-sm">Aún no estrenada</span>
                 </div>
               )}
             </div>
 
             <button
               onClick={() => handleRemove(item.id)}
-              className="flex items-center space-x-2 text-red-500 hover:text-red-400 transition mt-4 text-sm"
+              className="flex items-center gap-2 text-slate-500 hover:text-red-400 transition-colors duration-200 text-sm font-medium self-start"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="font-semibold">Eliminar</span>
+              <span>Eliminar</span>
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 pt-16">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl sm:text-4xl font-bold text-white mb-2">
-              Mi Lista
-            </h1>
-            <p className="text-gray-400 text-sm sm:text-base">
-              {lists.length} {lists.length === 1 ? "elemento" : "elementos"} guardados
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full sm:w-auto">
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="bg-gray-800 text-white text-sm px-3 py-2 rounded-lg border border-gray-700 focus:ring-1 focus:ring-red-500 w-full sm:w-auto"
-            >
-              <option value="recent">🕒 Más recientes</option>
-              <option value="oldest">📅 Más antiguos</option>
-              <option value="ratingHigh">⭐ Mayor puntuación</option>
-              <option value="ratingLow">⭐ Menor puntuación</option>
-            </select>
-
-            <button
-              onClick={handleClearAll}
-              className="flex items-center justify-center space-x-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-lg transition text-sm"
-            >
-              <Trash2 className="w-5 h-5" />
-              <span>Limpiar lista</span>
-            </button>
-          </div>
-        </div>
-
-        {/* 🟢 Ya estrenadas */}
-        {released.length > 0 && (
-          <>
-            <h2 className="text-xl font-semibold text-white mb-4">
-              🎬 Ya disponibles
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-              {released.map((item) => renderItemCard(item))}
+    <div className="min-h-screen bg-bg pt-16 font-sans">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-10"
+        >
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+            <div>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-2xl bg-accent/20 flex items-center justify-center">
+                  <BookmarkCheck className="w-5 h-5 text-accent" />
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Mi Lista</h1>
+              </div>
+              <div className="flex items-center gap-4 text-sm text-slate-400">
+                <span>{lists.length} {lists.length === 1 ? 'elemento' : 'elementos'}</span>
+                {avgRating > 0 && (
+                  <>
+                    <span className="text-slate-700">•</span>
+                    <span className="flex items-center gap-1 text-amber-400">
+                      <Star className="w-3.5 h-3.5 fill-current" />
+                      Promedio: {avgRating.toFixed(1)}/10
+                    </span>
+                  </>
+                )}
+              </div>
             </div>
-          </>
-        )}
 
-        {/* 🟡 Próximos estrenos */}
-        {upcoming.length > 0 && (
-          <>
-            <h2 className="text-xl font-semibold text-yellow-400 mb-4">
-              🔜 Próximos estrenos
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {upcoming.map((item) => renderItemCard(item, true))}
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <select
+                  value={filter}
+                  onChange={(e) => setFilter(e.target.value)}
+                  className="appearance-none bg-card text-slate-300 text-sm px-4 py-2.5 pr-10 rounded-xl border border-white/5 focus:border-accent/30 focus:outline-none transition-colors cursor-pointer"
+                >
+                  <option value="recent">Más recientes</option>
+                  <option value="oldest">Más antiguos</option>
+                  <option value="ratingHigh">Mayor puntuación</option>
+                  <option value="ratingLow">Menor puntuación</option>
+                </select>
+                <ArrowUpDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={handleClearAll}
+                className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 px-4 py-2.5 rounded-xl transition-colors duration-200 text-sm font-medium border border-red-500/10 hover:border-red-500/30"
+              >
+                <ListX className="w-4 h-4" />
+                <span className="hidden sm:inline">Limpiar todo</span>
+              </motion.button>
             </div>
-          </>
-        )}
+          </div>
+        </motion.div>
+
+        <AnimatePresence mode="popLayout">
+          {released.length > 0 && (
+            <motion.div
+              key="released"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="mb-10"
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <h2 className="text-lg font-semibold text-white">Ya disponibles</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-accent/20 text-accent-hover text-xs font-medium">
+                  {released.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {released.map((item) => renderItemCard(item))}
+              </div>
+            </motion.div>
+          )}
+
+          {upcoming.length > 0 && (
+            <motion.div
+              key="upcoming"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="flex items-center gap-3 mb-5">
+                <h2 className="text-lg font-semibold text-amber-400">Próximos estrenos</h2>
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-medium">
+                  {upcoming.length}
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {upcoming.map((item) => renderItemCard(item, true))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

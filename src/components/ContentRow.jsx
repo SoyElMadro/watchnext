@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import MovieCard from './MovieCard';
 
 function ContentRow({ title, items, onToggleList }) {
@@ -15,7 +16,7 @@ function ContentRow({ title, items, onToggleList }) {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const scrollAmount = container.clientWidth * 0.8;
+    const scrollAmount = container.clientWidth * 0.85;
     const newScrollLeft =
       direction === 'left'
         ? container.scrollLeft - scrollAmount
@@ -26,7 +27,7 @@ function ContentRow({ title, items, onToggleList }) {
       behavior: 'smooth',
     });
 
-    setTimeout(() => updateArrows(), 400);
+    setTimeout(() => updateArrows(), 450);
   };
 
   const updateArrows = () => {
@@ -34,64 +35,73 @@ function ContentRow({ title, items, onToggleList }) {
     if (!container) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = container;
-    setShowLeftArrow(scrollLeft > 0);
-    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10);
+    setShowLeftArrow(scrollLeft > 20);
+    setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 20);
   };
 
   return (
-    <div className="mb-14 group animate-fadeIn">
-      {/* Título con línea */}
-      <div className="flex items-center gap-3 mb-3 px-4 md:px-8">
-        <h2 className="text-2xl md:text-3xl font-extrabold tracking-wide text-white">
-          {title}
-        </h2>
-        <div className="flex-1 h-[2px] bg-gradient-to-r from-red-600/80 via-red-500/40 to-transparent" />
+    <div className="group/row relative">
+      <div className="container mx-auto px-4 sm:px-6">
+        <div className="flex items-center gap-4 mb-5">
+          <h2 className="section-title whitespace-nowrap">{title}</h2>
+          <div className="h-px flex-1 bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
+        </div>
       </div>
 
-      {/* Contenedor del carrusel */}
       <div className="relative">
-        {/* Flecha izquierda */}
         {showLeftArrow && (
-          <button
+          <motion.button
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.25 }}
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 
-                       w-12 h-24 rounded-r-xl
-                       bg-gradient-to-r from-gray-900/90 via-gray-800/70 to-transparent
-                       backdrop-blur-sm hover:scale-105 hover:brightness-110
-                       opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-start pl-2 shadow-lg"
+            className="absolute left-0 top-0 bottom-0 z-20 w-16 sm:w-20 flex items-center
+                       bg-gradient-to-r from-bg to-transparent
+                       hover:from-bg/90 transition-all duration-200"
           >
-            <ChevronLeft className="w-8 h-8 text-white drop-shadow" />
-          </button>
+            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10
+                          flex items-center justify-center ml-2
+                          hover:bg-white/10 hover:border-white/20 hover:scale-110
+                          transition-all duration-200 shadow-lg shadow-black/30">
+              <ChevronLeft className="w-6 h-6 text-white" />
+            </div>
+          </motion.button>
         )}
 
-        {/* Lista scrollable */}
         <div
           ref={scrollContainerRef}
           onScroll={updateArrows}
-          className="flex gap-4 overflow-x-auto hide-scrollbar px-4 md:px-8 py-8 scroll-smooth"
+          className="flex gap-4 sm:gap-5 overflow-x-auto hide-scrollbar px-4 sm:px-6 py-2 scroll-smooth"
         >
-          {items.map((item) => (
+          {items.map((item, i) => (
             <div
               key={item.id}
-              className="flex-shrink-0 w-40 sm:w-48 md:w-52 lg:w-56 transform transition-transform duration-300 hover:scale-104 hover:z-10"
+              className="flex-shrink-0 w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px]"
             >
-              <MovieCard item={item} onToggleList={onToggleList} />
+              <MovieCard item={item} index={i} onToggleList={onToggleList} />
             </div>
           ))}
         </div>
 
-        {/* Flecha derecha */}
         {showRightArrow && (
-          <button
+          <motion.button
+            initial={{ opacity: 0, x: 10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 10 }}
+            transition={{ duration: 0.25 }}
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 
-                       w-12 h-24 rounded-l-xl
-                       bg-gradient-to-l from-gray-900/90 via-gray-800/70 to-transparent
-                       backdrop-blur-sm hover:scale-105 hover:brightness-110
-                       opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-end pr-2 shadow-lg"
+            className="absolute right-0 top-0 bottom-0 z-20 w-16 sm:w-20 flex items-center justify-end
+                       bg-gradient-to-l from-bg to-transparent
+                       hover:from-bg/90 transition-all duration-200"
           >
-            <ChevronRight className="w-8 h-8 text-white drop-shadow" />
-          </button>
+            <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10
+                          flex items-center justify-center mr-2
+                          hover:bg-white/10 hover:border-white/20 hover:scale-110
+                          transition-all duration-200 shadow-lg shadow-black/30">
+              <ChevronRight className="w-6 h-6 text-white" />
+            </div>
+          </motion.button>
         )}
       </div>
     </div>
